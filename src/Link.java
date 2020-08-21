@@ -32,13 +32,13 @@ public class Link{
             pointer = pointer.tail;
         }
     }
+
     /** Moves the Joint at start to goal and adjusts the rest of the Link
      * accordingly. Also determines which joint is at start. Applies fabrik
      * to mobile joints. If TOKENS != 1, then move back and forth TOKENS
      * number of times.
      */
     public void move(Vec2 start, Vec2 goal, int tokens) {
-        Vec2 START = this.head.loc(new Vec2());
         Link pointer = this;
         Vec2 prev = new Vec2();
         while (pointer != null) {
@@ -61,30 +61,34 @@ public class Link{
             System.out.println("No joint at that location. Try again.");
         }
     }
+
     /** FABRIK. */
     public void fabrik(Joint j, Vec2 goal, int tokens) {
+        Vec2 START = this.head.loc(new Vec2());
+        int len = depth(j) + 1;
         Joint[] joints = getJoints(j);
         if (!isPossible(j, joints, goal)) {
             System.out.println("Not possible. Try again.");
         }
         else {
-            boolean alternate = true;
+            boolean alternate = false;
             while(tokens != 0) {
-                Vec2[] desiredLocs = alternate ? moveForward(j, goal) : moveBackward();
+                Vec2[] desiredLocs = alternate ?
+                        forwardPass(joints[0], START, j) : backwardsPass(j,
+                        goal);
                 Vec2 parent = desiredLocs[0];
                 joints[0].setTransform(desiredLocs[0]);
                 for (int i = 1; i < depth(j) + 1; i++) {
                     joints[i].setTransform(desiredLocs[i].minus(parent));
                     parent = desiredLocs[i];
                 }
-                alternate = false;
+                alternate = !alternate;
                 tokens--;
             }
         }
     }
-    /** Forward pass. Moves the mobile Joint j to the Vec2 goal.
-     * Invariant: Length of joint connections are preserved. */
-    public Vec2[] moveForward (Joint j, Vec2 goal) {
+    /** Backwards pass. */
+    public Vec2[] backwardsPass (Joint j, Vec2 goal) {
         Joint[] joints = getJoints(j);
         Vec2[] locs = getLocs(j);
         int len = depth(j) + 1;
@@ -100,14 +104,58 @@ public class Link{
         }
         return desiredLocs;
     }
+    /** Forward pass. TAKE OUT END TO MAKE WORK. USE J IN PLACE OF END. */
+    public Vec2[] forwardPass(Joint j, Vec2 start, Joint end) {
+        Joint[] joints = getJoints(end);
+        Vec2[] locs = getLocs(end);
+        int len = depth(end) + 1;
+        Vec2[] desiredLocs = new Vec2[128];
+        desiredLocs[0] = start;
+        for (int i = 1; i < len ; i++) {
+            Joint next = joints[i];
+            Vec2 dir = locs[i - 1].minus(start).toUnit();
+            Vec2 delta =
+                    dir.scaledBy(next.getTransform().findTransVec().findMag());
+            desiredLocs[i] = start.plus(delta);
+            start = desiredLocs[i];
+        }
+        return desiredLocs;
+    }
+    /** Forward pass. Moves the mobile Joint j to the Vec2 goal.
+     * Invariant: Length of joint connections are preserved. */
+    public Vec2[] moveForward (Joint j, Vec2 goal, Joint end) {
+        return pass(j, goal, true, end);
+    }
+
     /** Backward pass. Moves the root of the link back to its original position.
      */
-    public Vec2[] moveBackward () {
-        return null;
+    public Vec2[] moveBackward (Joint j, Vec2 initial, Joint end) {
+        return pass(j, initial, false, end);
     }
+
+    /** Pass outline. Can be made backwards or forwards by ISFORWARDS. */
+    public Vec2[] pass(Joint j, Vec2 goal, boolean isForwards, Joint end) {
+        int len = depth(end) + 1;
+        int increment = isForwards ? len : 0;
+        int factor = isForwards ? -1 : 1;
+        Joint[] joints = getJoints(end);
+        Vec2[] locs = getLocs(end);
+        Vec2[] desiredLocs = new Vec2[128];
+        desiredLocs[isForwards ? 0: len - 1] = goal;
+        for (int i = 1 ; i < len ; i++) {
+            int nextInd = len - i*factor - increment;
+            Joint next = joints[nextInd];
+            Vec2 dir = locs[nextInd - 1].minus(goal).toUnit();
+            Vec2 delta =
+                    dir.scaledBy(next.getTransform().findTransVec().findMag());
+            desiredLocs[nextInd - 1*factor] = goal.plus(delta);
+            goal = desiredLocs[nextInd - 1*factor];
+        }
+        return desiredLocs;
+    }
+
     /** Returns whether the chosen destination LOC is possible for JOINT in
-     * JOINTS to reach. Only a loose check.
-     */
+     * JOINTS to reach. Only a loose check. */
     public boolean isPossible(Joint joint, Joint[] joints, Vec2 loc) {
         Vec2 center = this.head.loc(new Vec2());
 
@@ -118,6 +166,7 @@ public class Link{
         }
         return distSquared < radiusSquared;
     }
+
     /** Returns an array of the Joints in this Link up to but including
      * Joint j. Assumes j is somewhere in this Link. */
     public Joint[] getJoints(Joint j) {
@@ -132,6 +181,7 @@ public class Link{
         joints[counter] = pointer.head;
         return joints;
     }
+
     /** Returns how far Joint j is from the root of this link. Assumes the
      * joint is somewhere in this Link. */
     public int depth(Joint j) {
@@ -143,6 +193,7 @@ public class Link{
         }
         return counter;
     }
+
     /** Returns an array of the locations of the Joints in this Link up
      * to but including Joint j. */
     public Vec2[] getLocs(Joint j) {
@@ -159,6 +210,7 @@ public class Link{
         locs[counter] = pointer.head.loc(parent);
         return locs;
     }
+
     /** Adds a Joint to the end of the Linked List. */
     public void add (Joint j) {
         Link pointer = this;
@@ -167,6 +219,7 @@ public class Link{
         }
         pointer.tail = new Link(j);
     }
+
     /** Finds the Link whose head is Joint j starting from this Link. */
     public Link find(Joint j) {
         Link pointer = this;
@@ -178,10 +231,12 @@ public class Link{
         }
         return null;
     }
+
     /** Returns the head of this Link. */
     public Joint head() {
         return this.head;
     }
+
     /** Returns the tail of this Link. */
     public Link tail() {
         return this.tail;

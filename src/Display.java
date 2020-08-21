@@ -79,7 +79,7 @@ public class Display extends JPanel implements MouseListener,
      */
     public void update() {
         if (pressed && end != null) {
-            link.move(start, end, 1);
+            link.move(start, end, 2);
         }
         repaint();
         needsRepaint = false;
