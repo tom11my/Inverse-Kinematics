@@ -12,6 +12,7 @@ public class Link{
         this.add(new Joint(new Vec2(30, 10)));
         this.add(new Joint(new Vec2(80, -40)));
         this.add(new Joint(new Vec2(100, 30)));
+        this.add(new Joint(new Vec2(40, -40)));
     }
 
     public Link(Joint j) {
@@ -113,7 +114,7 @@ public class Link{
         desiredLocs[0] = start;
         for (int i = 1; i < len ; i++) {
             Joint next = joints[i];
-            Vec2 dir = locs[i - 1].minus(start).toUnit();
+            Vec2 dir = locs[i].minus(start).toUnit();
             Vec2 delta =
                     dir.scaledBy(next.getTransform().findTransVec().findMag());
             desiredLocs[i] = start.plus(delta);

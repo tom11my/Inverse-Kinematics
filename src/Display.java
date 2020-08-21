@@ -8,6 +8,7 @@ public class Display extends JPanel implements MouseListener,
     private static int timePerFrame = 1;
     private static final int framesPerSecond = 60;
     private static boolean needsRepaint = true;
+    private static int tokens = 1;
 
     private Vec2 mouseLoc = new Vec2(-1, -1);
     private static boolean pressed = false, released = false;
@@ -22,26 +23,25 @@ public class Display extends JPanel implements MouseListener,
         addMouseListener(this);
         addMouseMotionListener(this);
         JPanel btnPanel = new JPanel(new FlowLayout());
-        JButton moveBut = new JButton("Move");
+        JButton moveBut = new JButton("Fixed Joint");
         btnPanel.add(moveBut);
         moveBut.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 //Note: if we want each action to be performed in a second, we must give framesPerSecond number of tokens
                 //link.head().translate(new Vec2(20, 30));
-                link.move(link.head().loc(new Vec2()),
-                        link.head().loc(new Vec2()).plus(new Vec2(20, 30)), 1);
+                tokens = 2;
                 update();
             }
         });
 
-        JButton mobileMove = new JButton("Mobile Move");
+        JButton mobileMove = new JButton("Mobile Joint");
         btnPanel.add(mobileMove);
         mobileMove.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 //Note: if we want each action to be performed in a second, we must give framesPerSecond number of tokens
-                link.move(new Vec2(190, 80), new Vec2(160, 90), 1);
+                tokens = 1;
                 update();
             }
         });
@@ -79,7 +79,7 @@ public class Display extends JPanel implements MouseListener,
      */
     public void update() {
         if (pressed && end != null) {
-            link.move(start, end, 2);
+            link.move(start, end, tokens);
         }
         repaint();
         needsRepaint = false;
@@ -94,12 +94,16 @@ public class Display extends JPanel implements MouseListener,
     public void mousePressed(MouseEvent e) {
         System.out.println("pressed");
         start = new Vec2(e.getX(), e.getY());
+        end = start;
         pressed = true;
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        System.out.println("release");
         pressed = false;
+        start = new Vec2(e.getX(), e.getY());
+        end = start;
     }
 
     @Override
@@ -114,7 +118,6 @@ public class Display extends JPanel implements MouseListener,
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        System.out.println("dragged");
         end = new Vec2(e.getX(), e.getY());
         update();
 
