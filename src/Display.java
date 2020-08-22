@@ -10,7 +10,7 @@ public class Display extends JPanel implements MouseListener,
     private static int timePerFrame = 1;
     private static final int framesPerSecond = 60;
     private static boolean needsRepaint = true;
-    private static int tokens = 1;
+    private static int tokens = 4;
     private Node body;
     private Vec2 center;
 
@@ -34,7 +34,7 @@ public class Display extends JPanel implements MouseListener,
             public void actionPerformed(ActionEvent e) {
                 //Note: if we want each action to be performed in a second, we must give framesPerSecond number of tokens
                 //link.head().translate(new Vec2(20, 30));
-                tokens = 4;
+                tokens = 8;
                 update();
             }
         });
@@ -55,8 +55,9 @@ public class Display extends JPanel implements MouseListener,
         resetBut.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                link = new Link();
+                setup();
                 update();
+                repaint();
             }
         });
         //container cp allows us to two JPanels: canvas and buttons

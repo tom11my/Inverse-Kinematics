@@ -45,7 +45,8 @@ public class Link{
      * to mobile joints. If TOKENS != 1, then move back and forth TOKENS
      * number of times. Where PREV is center.
      */
-    public void move(Vec2 start, Vec2 goal, int tokens, Vec2 prev) {
+    public void move(Vec2 start, Vec2 goal, int tokens, Vec2 preLink) {
+        Vec2 prev = preLink;
         Link pointer = this;
         while (pointer != null) {
             prev = pointer.head.loc(prev);
@@ -58,20 +59,22 @@ public class Link{
             Joint j = pointer.head;
             if (j.isStationary()) {
                 //this.head.setTransform(goal);
+                System.out.println(prev);
                 this.root.translate(goal.minus(prev));
             }
             else {
-                fabrik(j, goal, tokens, prev);
+                System.out.println(prev);
+                fabrik(j, goal, tokens, preLink);
             }
         } else {
-            System.out.println("No joint at that location. Try again.");
+            //System.out.println("No joint at that location. Try again.");
         }
     }
 
     /** FABRIK. */
     public void fabrik(Joint j, Vec2 goal, int tokens, Vec2 prev) {
-        Vec2 START = this.head.loc(new Vec2());
-        //Vec2 START = prev;
+        //Vec2 START = this.head.loc(new Vec2());
+        Vec2 START = this.head.loc(prev);
         Joint[] joints = getJoints(j);
         if (!isPossible(j, joints, goal, prev)) {
             System.out.println("Not possible. Try again.");
@@ -79,9 +82,11 @@ public class Link{
         } else {
             boolean alternate = false;
             while(tokens != 0) {
-                Vec2[] desiredLocs = alternate ? forwardPass(joints[0], START, j) : backwardsPass(j, goal);
+                Vec2[] desiredLocs = alternate ? forwardPass(START
+                        , j, prev) : backwardsPass(j, goal, prev);
                 Vec2 parent = desiredLocs[0];
-                joints[0].setTransform(desiredLocs[0]);
+                //joints[0].setTransform(desiredLocs[0]);
+                joints[0].setTransform(desiredLocs[0].minus(prev));
                 for (int i = 1; i < depth(j) + 1; i++) {
                     joints[i].setTransform(desiredLocs[i].minus(parent));
                     parent = desiredLocs[i];
@@ -93,9 +98,9 @@ public class Link{
         }
     }
     /** Backwards pass. */
-    public Vec2[] backwardsPass (Joint j, Vec2 goal) {
+    public Vec2[] backwardsPass (Joint j, Vec2 goal, Vec2 prev) {
         Joint[] joints = getJoints(j);
-        Vec2[] locs = getLocs(j);
+        Vec2[] locs = getLocs(j, prev);
         int len = depth(j) + 1;
         Vec2[] desiredLocs = new Vec2[128];
         desiredLocs[len - 1] = goal;
@@ -110,9 +115,9 @@ public class Link{
         return desiredLocs;
     }
     /** Forward pass. TAKE OUT END TO MAKE WORK. USE J IN PLACE OF END. */
-    public Vec2[] forwardPass(Joint j, Vec2 start, Joint end) {
+    public Vec2[] forwardPass(Vec2 start, Joint end, Vec2 prev) {
         Joint[] joints = getJoints(end);
-        Vec2[] locs = getLocs(end);
+        Vec2[] locs = getLocs(end, prev);
         int len = depth(end) + 1;
         Vec2[] desiredLocs = new Vec2[128];
         desiredLocs[0] = start;
@@ -131,8 +136,8 @@ public class Link{
      * JOINTS to reach. Only a loose check. */
     public boolean isPossible(Joint joint, Joint[] joints, Vec2 loc,
                               Vec2 prev) {
-        //Vec2 center = this.head.loc(new Vec2());
-        Vec2 center = prev;
+        Vec2 center = this.head.loc(prev);
+        //Vec2 center = prev;
 
         float distSquared = center.minus(loc).findMag();
         float radiusSquared = 0;
@@ -171,9 +176,9 @@ public class Link{
 
     /** Returns an array of the locations of the Joints in this Link up
      * to but including Joint j. */
-    public Vec2[] getLocs(Joint j) {
+    public Vec2[] getLocs(Joint j, Vec2 parent) {
         Link pointer = this;
-        Vec2 parent = new Vec2();
+        //Vec2 parent = new Vec2();
         Vec2[] locs = new Vec2[128];
         int counter = 0;
         while (pointer.head != j) {
