@@ -1,10 +1,11 @@
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /*
- * would be useful if we had a traverse function that took in a function itself, 
- * so we could apply this latter function to each element in tree (essentially a for each)
+ * Serves as the template for Body and any Action Trees (future)
  */
  public class Node<T> {
         private T data;
@@ -61,15 +62,24 @@ import java.util.List;
 			this.getChildren().forEach(child -> child.traverse());
 			System.out.println(this);
 		}
-		//NOTE: this version of traverseAdd only adds to the children and not to the root node
-		//this is to ensure our placeholder node for action tree events remains tokenless (or negative)
-		public void traverseAdd(int tokens) {
-			/*this.getChildren().forEach(child -> child.traverseAdd(tokens));
-			((Action)this.getData()).addTokens(tokens);*/
-			this.getChildren().forEach(child -> {
-				((Action)child.getData()).addTokens(tokens);
-				child.traverseAdd(tokens);
-			});
+		public void traverseApply(Consumer<Link> func) {
+			func.accept((Link) this.data);
+			for (Node child : this.children) {
+				child.traverseApply(func);
+			}
+		}
+		public void traverseDraw(Graphics2D g2d, Vec2 parentLoc) {
+			Link parent = (Link) this.data;
+        	parent.draw(g2d, parentLoc);
+			parentLoc = parent.head().loc(parentLoc);
+			for (Node l : this.children) {
+        		l.traverseDraw(g2d, parentLoc);
+        		Link child = (Link) l.data;
+        		Vec2 childLoc = child.head().loc(parentLoc);
+				g2d.drawLine((int)parentLoc.getX(), (int)parentLoc.getY(),
+						(int)childLoc.getX(),
+						(int)childLoc.getY());
+			}
 		}
 		//draws joints of body with transformation applying outward to children
 		public void traverseDraw(Graphics2D g2d, Mat33 multParents, Vec3 parentLoc) {
@@ -83,7 +93,7 @@ import java.util.List;
 				Vec2 realCurLoc = curParentLoc.multiply(((MovingBodyPart)this.getData()).getTransform()).trim();
 				g2d.drawLine((int)curParentLoc.getX(), (int)curParentLoc.getY(), (int)realCurLoc.getX(), (int)realCurLoc.getY());
 			}
-			for(Node<T> child: this.getChildren()) {
+			for(Node child: this.getChildren()) {
 				child.traverseDraw(g2d, multParents, parentLoc);
 			}
 		}
@@ -116,6 +126,20 @@ import java.util.List;
 					return temp;
 				if(temp.find(node) != null)
 					return temp.find(node);
+			}
+			return null;
+		}
+		/** Really need to create my own body class that extends this one. */
+		public Vec2 findParentLinkLoc(Link link, Vec2 parent) {
+			if (this.data == link) {
+				return parent;
+			}
+			for (Node child : this.children) {
+				Vec2 curLoc = ((Link)this.data).head().loc(parent);
+				Vec2 found = child.findParentLinkLoc(link, curLoc);
+				if (found != null) {
+					return found;
+				}
 			}
 			return null;
 		}

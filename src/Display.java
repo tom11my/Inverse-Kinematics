@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLOutput;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Display extends JPanel implements MouseListener,
         MouseMotionListener {
@@ -9,6 +11,8 @@ public class Display extends JPanel implements MouseListener,
     private static final int framesPerSecond = 60;
     private static boolean needsRepaint = true;
     private static int tokens = 1;
+    private Node body;
+    private Vec2 center;
 
     private Vec2 mouseLoc = new Vec2(-1, -1);
     private static boolean pressed = false, released = false;
@@ -30,7 +34,7 @@ public class Display extends JPanel implements MouseListener,
             public void actionPerformed(ActionEvent e) {
                 //Note: if we want each action to be performed in a second, we must give framesPerSecond number of tokens
                 //link.head().translate(new Vec2(20, 30));
-                tokens = 2;
+                tokens = 4;
                 update();
             }
         });
@@ -62,15 +66,53 @@ public class Display extends JPanel implements MouseListener,
         cp.add(btnPanel, BorderLayout.SOUTH);
         setup();
     }
-
+    /** First create the fixed torso. Then add on the Links that let the torso
+     move. For now I'm ignoring the head which is a moving body part which
+     means I'd have to revamp Link a little.
+     */
     public void setup() {
-        link = new Link();
+        center = new Vec2(300, 400);
+        //link = new Link();
+        Joint root = new Joint(new Vec2(center.getX(), center.getY()), true);
+        Link pelvis = new Link(root, root);
+        Link hipRight = new Link(new Joint(new Vec2(-40, 0), true), root);
+        Link hipLeft = new Link(new Joint(new Vec2(40, 0), true), root);
+        body = new Node(pelvis);
+        body.addChild(new Node(hipLeft));
+        body.addChild(new Node(hipRight));
+
+        Link neck = new Link(new Joint(new Vec2(0, -100), true), root);
+        Link shoulderLeft = new Link(new Joint(new Vec2(40, 0), true), root);
+        Link shoulderRight = new Link(new Joint(new Vec2(-40, 0), true), root);
+        Node neckNode = new Node(neck);
+        body.addChild(neckNode);
+        neckNode.addChild(new Node(shoulderLeft));
+        neckNode.addChild(new Node(shoulderRight));
+
+        Joint kneeRight = new Joint(new Vec2(-10, 80));
+        Joint kneeLeft = new Joint(new Vec2(10, 80));
+        Joint heelRight = new Joint(new Vec2(10, 90));
+        Joint heelLeft = new Joint(new Vec2(-10, 90));
+        hipRight.add(kneeRight);
+        hipRight.add(heelRight);
+        hipLeft.add(kneeLeft);
+        hipLeft.add(heelLeft);
+
+        Joint elbowRight = new Joint(new Vec2(-40, 20));
+        Joint elbowLeft = new Joint(new Vec2(40, 20));
+        Joint wristRight = new Joint(new Vec2(-40, -40));
+        Joint wristLeft = new Joint(new Vec2(40, -40));
+        shoulderRight.add(elbowRight);
+        shoulderRight.add(wristRight);
+        shoulderLeft.add(elbowLeft);
+        shoulderLeft.add(wristLeft);
     }
 
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setColor(Color.BLACK);
-        link.draw(g2d);
+        //link.draw(g2d);
+        body.traverseDraw(g2d, new Vec2());
 
     }
 
@@ -79,9 +121,17 @@ public class Display extends JPanel implements MouseListener,
      */
     public void update() {
         if (pressed && end != null) {
-            link.move(start, end, tokens);
+            //link.move(start, end, tokens);
+            //need a better technique to find the link that i need to search;
+            // this is just brute force
+            Consumer<Link> func = (link) -> link.move(start, end, tokens,
+                    body.findParentLinkLoc(link, new Vec2()));
+            body.traverseApply(func);
+            repaint();
         }
-        repaint();
+        if (needsRepaint) {
+            repaint();
+        }
         needsRepaint = false;
     }
 
@@ -119,6 +169,7 @@ public class Display extends JPanel implements MouseListener,
     @Override
     public void mouseDragged(MouseEvent e) {
         end = new Vec2(e.getX(), e.getY());
+        needsRepaint = true;
         update();
 
         start = end;

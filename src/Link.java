@@ -4,10 +4,12 @@ import java.util.LinkedList;
 public class Link{
     private Joint head;
     private Link tail;
+    /** ROOT is used for stationary joint translations. */
+    private Joint root;
     /** Default Link of 5 nodes for testing. */
     public Link() {
         this.head = new Joint(new Vec2(100, 100));
-        this.head.setStationary(true);
+        this.root = this.head;
         this.add(new Joint(new Vec2(40, 60)));
         this.add(new Joint(new Vec2(30, 10)));
         this.add(new Joint(new Vec2(80, -40)));
@@ -18,12 +20,16 @@ public class Link{
     public Link(Joint j) {
         this.head = j;
     }
+    public Link(Joint j, Joint root) {
+        this.head = j;
+        this.root = root;
+    }
 
     /** Draws the Joints of this group by traversing through them, starting
      * at the root. */
-    public void draw(Graphics2D g2d) {
+    public void draw(Graphics2D g2d, Vec2 prev) {
         Link pointer = this;
-        Vec2 prev = pointer.head.draw(g2d, new Vec2(0, 0));
+        prev = pointer.head.draw(g2d, prev);
         pointer = pointer.tail;
         while(pointer != null) {
             Vec2 temp = prev;
@@ -37,11 +43,10 @@ public class Link{
     /** Moves the Joint at start to goal and adjusts the rest of the Link
      * accordingly. Also determines which joint is at start. Applies fabrik
      * to mobile joints. If TOKENS != 1, then move back and forth TOKENS
-     * number of times.
+     * number of times. Where PREV is center.
      */
-    public void move(Vec2 start, Vec2 goal, int tokens) {
+    public void move(Vec2 start, Vec2 goal, int tokens, Vec2 prev) {
         Link pointer = this;
-        Vec2 prev = new Vec2();
         while (pointer != null) {
             prev = pointer.head.loc(prev);
             if (prev.minus(start).findMag2() < Joint.radius* Joint.radius) {
@@ -52,11 +57,11 @@ public class Link{
         if (pointer != null) {
             Joint j = pointer.head;
             if (j.isStationary()) {
-                this.head.setTransform(goal);
-            } else {
-                fabrik(j, goal, tokens);
-
-
+                //this.head.setTransform(goal);
+                this.root.translate(goal.minus(prev));
+            }
+            else {
+                fabrik(j, goal, tokens, prev);
             }
         } else {
             System.out.println("No joint at that location. Try again.");
@@ -64,19 +69,17 @@ public class Link{
     }
 
     /** FABRIK. */
-    public void fabrik(Joint j, Vec2 goal, int tokens) {
+    public void fabrik(Joint j, Vec2 goal, int tokens, Vec2 prev) {
         Vec2 START = this.head.loc(new Vec2());
-        int len = depth(j) + 1;
+        //Vec2 START = prev;
         Joint[] joints = getJoints(j);
-        if (!isPossible(j, joints, goal)) {
+        if (!isPossible(j, joints, goal, prev)) {
             System.out.println("Not possible. Try again.");
-        }
-        else {
+
+        } else {
             boolean alternate = false;
             while(tokens != 0) {
-                Vec2[] desiredLocs = alternate ?
-                        forwardPass(joints[0], START, j) : backwardsPass(j,
-                        goal);
+                Vec2[] desiredLocs = alternate ? forwardPass(joints[0], START, j) : backwardsPass(j, goal);
                 Vec2 parent = desiredLocs[0];
                 joints[0].setTransform(desiredLocs[0]);
                 for (int i = 1; i < depth(j) + 1; i++) {
@@ -86,6 +89,7 @@ public class Link{
                 alternate = !alternate;
                 tokens--;
             }
+
         }
     }
     /** Backwards pass. */
@@ -122,43 +126,13 @@ public class Link{
         }
         return desiredLocs;
     }
-    /** Forward pass. Moves the mobile Joint j to the Vec2 goal.
-     * Invariant: Length of joint connections are preserved. */
-    public Vec2[] moveForward (Joint j, Vec2 goal, Joint end) {
-        return pass(j, goal, true, end);
-    }
-
-    /** Backward pass. Moves the root of the link back to its original position.
-     */
-    public Vec2[] moveBackward (Joint j, Vec2 initial, Joint end) {
-        return pass(j, initial, false, end);
-    }
-
-    /** Pass outline. Can be made backwards or forwards by ISFORWARDS. */
-    public Vec2[] pass(Joint j, Vec2 goal, boolean isForwards, Joint end) {
-        int len = depth(end) + 1;
-        int increment = isForwards ? len : 0;
-        int factor = isForwards ? -1 : 1;
-        Joint[] joints = getJoints(end);
-        Vec2[] locs = getLocs(end);
-        Vec2[] desiredLocs = new Vec2[128];
-        desiredLocs[isForwards ? 0: len - 1] = goal;
-        for (int i = 1 ; i < len ; i++) {
-            int nextInd = len - i*factor - increment;
-            Joint next = joints[nextInd];
-            Vec2 dir = locs[nextInd - 1].minus(goal).toUnit();
-            Vec2 delta =
-                    dir.scaledBy(next.getTransform().findTransVec().findMag());
-            desiredLocs[nextInd - 1*factor] = goal.plus(delta);
-            goal = desiredLocs[nextInd - 1*factor];
-        }
-        return desiredLocs;
-    }
 
     /** Returns whether the chosen destination LOC is possible for JOINT in
      * JOINTS to reach. Only a loose check. */
-    public boolean isPossible(Joint joint, Joint[] joints, Vec2 loc) {
-        Vec2 center = this.head.loc(new Vec2());
+    public boolean isPossible(Joint joint, Joint[] joints, Vec2 loc,
+                              Vec2 prev) {
+        //Vec2 center = this.head.loc(new Vec2());
+        Vec2 center = prev;
 
         float distSquared = center.minus(loc).findMag();
         float radiusSquared = 0;
@@ -219,18 +193,6 @@ public class Link{
             pointer = pointer.tail;
         }
         pointer.tail = new Link(j);
-    }
-
-    /** Finds the Link whose head is Joint j starting from this Link. */
-    public Link find(Joint j) {
-        Link pointer = this;
-        while (pointer != null) {
-            if (pointer.head == j) {
-                return pointer;
-            }
-            pointer = pointer.tail;
-        }
-        return null;
     }
 
     /** Returns the head of this Link. */

@@ -19,6 +19,12 @@ public abstract class MovingBodyPart {
     }
     public MovingBodyPart(Vec2 change) {
         this.setTransform(Mat33.findTranslationMat(change));
+        this.isStationary = false;
+    }
+    /** Translates the parent vec (as a location) based on the transform matrix
+     *  to find this Joint's location. */
+    public Vec2 loc(Vec2 parent) {
+        return new Vec3(parent.getX(), parent.getY(), 1).multiply(this.getTransform()).trim();
     }
     //changed to return Vec2 instead of void
     public abstract Vec2 draw (Graphics2D g, Vec2 parent);
@@ -29,7 +35,7 @@ public abstract class MovingBodyPart {
         float y = transform.getValAtPosition(1, 2);
 
         transform.setValAtPosition(0, 2, x+trans.getX());
-        transform.setValAtPosition(1, 2, x + trans.getY());
+        transform.setValAtPosition(1, 2, y + trans.getY());
     }
     public Vec2 getChange() {
         return change;
@@ -49,9 +55,5 @@ public abstract class MovingBodyPart {
     }
     public boolean isStationary() {
         return isStationary;
-    }
-
-    public void setStationary(boolean stationary) {
-        isStationary = stationary;
     }
 }

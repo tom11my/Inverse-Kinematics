@@ -1,5 +1,7 @@
 import java.awt.*;
 
+/** A joint must be either stationary or mobile but they share the same
+ * functionality. */
 public class Joint extends MovingBodyPart{
     private String name;
     public static final int radius = 13;
@@ -18,11 +20,6 @@ public class Joint extends MovingBodyPart{
         Vec2 transformedLoc = loc(parent);
         g.drawOval((int)transformedLoc.getX() - radius, (int)transformedLoc.getY() - radius, radius*2, radius*2);
         return transformedLoc;
-    }
-    /** Translates the parent vec (as a location) based on the transform matrix
-     *  to find this Joint's location. */
-    public Vec2 loc(Vec2 parent) {
-        return new Vec3(parent.getX(), parent.getY(), 1).multiply(this.getTransform()).trim();
     }
 
     /** Draw based on previous transforms. */
@@ -44,4 +41,5 @@ public class Joint extends MovingBodyPart{
         // TODO Auto-generated method stub
 
     }
+
 }
