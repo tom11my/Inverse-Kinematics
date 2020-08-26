@@ -12,7 +12,6 @@ Each link has the following property:
 Joints further down in a Link (such as the foot joint) can change the transformations of joints further up in the Link (such as the knee joint) but not vis versa.
 These changes are determined by FABRIK (inverse kinematics) when the user drags a joint to a new location. 
 
-The specific joint a user presses is determined by brute force and a quadtree could be a future optimization of this project. 
-More future goals include simulating walking, allowing user-chosen movements to persist as data that can be "replayed", or setting key positions and interpolating between them to create fluid motion. 
+Some future goals include simulating walking, allowing user-chosen movements to persist as data that can be "replayed", or setting key positions and interpolating between them to create fluid motion. 
 
 ![](animation.gif)
