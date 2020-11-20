@@ -28,7 +28,6 @@ public class Display extends JPanel implements MouseListener,
         moveBut.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //Note: if we want each action to be performed in a second, we must give framesPerSecond number of tokens
                 //link.head().translate(new Vec2(20, 30));
                 tokens = 2;
                 update();
@@ -40,7 +39,6 @@ public class Display extends JPanel implements MouseListener,
         mobileMove.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //Note: if we want each action to be performed in a second, we must give framesPerSecond number of tokens
                 tokens = 1;
                 update();
             }
@@ -55,7 +53,6 @@ public class Display extends JPanel implements MouseListener,
                 update();
             }
         });
-        //container cp allows us to two JPanels: canvas and buttons
         cp = frame.getContentPane();
         cp.setLayout(new BorderLayout());
         cp.add(this, BorderLayout.CENTER);
@@ -144,7 +141,6 @@ public class Display extends JPanel implements MouseListener,
         int counter = 0;
         boolean run = true;
         while(run) {
-            //not sure why this sleep is needed...
             Thread.sleep(1);
             while(true) {
                 if (needsRepaint)

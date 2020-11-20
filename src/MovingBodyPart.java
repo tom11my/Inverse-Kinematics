@@ -5,11 +5,10 @@ import java.awt.Graphics2D;
 public abstract class MovingBodyPart {
     //describes the transformation mat to be applied to previous parent to find current part loc
     private Mat33 transform;
-    /** Stationary MovingBodyParts cause the entire group to translate. */
+    //Stationary MovingBodyParts cause the entire group to translate. 
     private boolean isStationary;
     //describes the amount a given part should change after each drawing update
     private Vec2 change;
-    //private Mat22 transform;
     public MovingBodyPart(Vec2 change, boolean isStationary) {
         this.isStationary = isStationary;
         this.setTransform(Mat33.findTranslationMat(change));

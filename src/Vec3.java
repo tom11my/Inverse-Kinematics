@@ -12,7 +12,6 @@ public class Vec3 {
 		return new Vec3(nums[0][0]*x + nums[0][1]*y + nums[0][2]*z, nums[1][0]*x + nums[1][1]*y + nums[1][2]*z, nums[2][0]*x + nums[2][1]*y + nums[2][2]*z);
 
 	}
-	//trims Vec3 to Vec2 by eliminating z term
 	public Vec2 trim () {
 		return new Vec2(this.x, this.y);
 	}

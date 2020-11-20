@@ -65,8 +65,6 @@ public class Mat33 {
 		float [] arr = {mat2.getA(), mat2.getB(), 0.0f, mat2.getC(), mat2.getD(), 0.0f, 0.0f, 0.0f, 1.0f};
 		return new Mat33(arr);
 	}
-	//creates translation matrix given a 2D pofloat
-	//careful with negative/positive
 	public static Mat33 findTransMat(Vec3 point) {
 		Mat33 m = new Mat33();
 		m.setValAtPosition(0, 2, -point.getX());
@@ -77,7 +75,6 @@ public class Mat33 {
 	public Vec2 findTransVec() {
 		return new Vec2(getValAtPosition(0, 2), getValAtPosition(1, 2));
 	}
-	//might need to add two negatives like I did above
 	public static Mat33 findTranslationMat(Vec2 point) {
 		Mat33 m = new Mat33();
 		m.setValAtPosition(0, 2, point.getX());

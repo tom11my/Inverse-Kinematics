@@ -25,10 +25,6 @@ public class Joint extends MovingBodyPart{
         return new Vec3(parent.getX(), parent.getY(), 1).multiply(this.getTransform()).trim();
     }
 
-    /** Draw based on previous transforms. */
-    public void draw (Graphics2D g, Mat33 prev) {
-
-    }
     String getName() {
         return name;
     }
